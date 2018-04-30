@@ -11,8 +11,42 @@ const connection = mysql.createConnection({
   database: process.env.MY_DATABASE
 });
 
-connection.connect(function(err) {
-  if(err) throw err;
-  console.log("Connected on ID: " + connection.threadId);
-  connection.end();
-});
+function homeMenu() {
+  getProducts();
+  inquirer.prompt([
+    {
+      name: "selection",
+      type: "input",
+      message: "Product ID: "
+    }, {
+      name: "quantity",
+      type: "input",
+      message: "How many would you like to purchase?"
+    }
+  ])
+  .then(data => {
+    console.log("Yep.");
+  });
+}
+
+function getProducts() {
+  const query = "SELECT * FROM products";
+  connection.query(query, function(err, res) {
+    if(err) throw err;
+    printProducts(res);
+  });
+}
+
+function printProducts(products) {
+  console.log("\n| Welcome to the Bamazonian Super General Store!" +
+              "\n| Please take a look at our wares below!" +
+              "\n| ==========================================");
+  console.log("\n| ID | ITEM | DEPARTMENT | PRICE");
+  products.forEach(product => {
+    console.log("| " + product.item_id + " | " + product.product_name + " | " +
+                product.department_name + " | $" + product.price);
+  });
+  console.log("\n| Please enter the ID of the product you wish to buy...");
+}
+
+homeMenu();
