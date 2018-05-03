@@ -26,15 +26,30 @@ function homeMenu() {
     }
   ])
   .then(data => {
-    if(parseInt(data.selection) === NaN) {
-      console.log("It looks like the item you selected wasn't an option," +
-                  "\nTaking you back to the home menu...");
-      homeMenu();
-    }
     const query = "SELECT * FROM products";
+    let itemID = data.selection - 1;
+    let amountToBuy = data.quantity;
     connection.query(query, (err, res) => {
       if(err) throw err;
-      console.log("GOT STUFF");
+      let itemObj = res[itemID];
+      if(itemObj.stock_quantity < amountToBuy) {
+        console.log("Sorry! We don't have " + amountToBuy + " " +
+                    itemObj.product_name + "s");
+        console.log("Taking you back to the menu...");
+        setTimeout(homeMenu, 3000);
+      } else {
+        let newQuantity = itemObj.stock_quantity - amountToBuy;
+        let updateQuery = "UPDATE products " +
+                            "SET stock_quantity = " + newQuantity + " " +
+                            "WHERE item_id = " + (itemID + 1);
+        connection.query(updateQuery, (err, res) => {
+          if(err) throw err;
+          console.log("THANK YOU FOR YOUR PURCHASE!!!" +
+                      "\nYou spent $" + itemObj.price * amountToBuy);
+          console.log("Taking you back to the home menu...");
+          setTimeout(homeMenu, 4000);
+        });
+      }
     });
   });
 }
@@ -52,11 +67,11 @@ function printProducts(products) {
               "\n| Please take a look at our wares below!" +
               "\n| ==========================================");
   let table = new Table({
-    head: ["ID", "ITEM", "DEPARTMENT", "PRICE"]
+    head: ["ID", "ITEM", "DEPARTMENT", "PRICE", "STOCK"]
   });
   products.forEach(product => {
     table.push([product.item_id, product.product_name,
-                product.department_name, product.price]);
+                product.department_name, product.price, product.stock_quantity]);
   });
   console.log(table.toString());
 }
